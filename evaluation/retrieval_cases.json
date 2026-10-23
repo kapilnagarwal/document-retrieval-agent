@@ -1,0 +1,35 @@
+{
+  "description": "Synthetic public learning benchmark. Expected sources label relevance, not generated-answer correctness.",
+  "documents": {
+    "rag.txt": "Retrieval augmented generation retrieves relevant document passages and supplies this context to a language model. RAG answers should cite supporting sources. Retrieval does not train the language model.",
+    "vectors.txt": "Embeddings represent text meaning as numerical vectors. Cosine similarity compares vector directions; cosine distance is one minus cosine similarity. Lower cosine distance means closer vectors. A vector database stores embeddings and metadata.",
+    "tls.txt": "TLS encrypts network traffic in transit. Certificate validation checks the server identity against trusted certificate authorities. Expired certificates can cause a TLS handshake failure.",
+    "backups.txt": "Create database backups while the backend is stopped. Restore the backup into a separate directory and verify document counts. Recovery removes unfinished imports after an interrupted process.",
+    "chunks.txt": "Chunking splits long documents into smaller text passages. Chunk overlap preserves context around passage boundaries. PDF page numbers are retained in metadata so readers can locate evidence.",
+    "versions.txt": "Document replacement creates a new version of the same source. The previous version becomes superseded only after indexing succeeds. Failed replacement leaves the previous document active.",
+    "commands.txt": "helm install demo ./chart --namespace sandbox\npodman pull example.test/app:1.0.4-3\npodman pull example.test/app:1.0.4-30\nkubectl get pods --namespace sandbox",
+    "garden.txt": "Tomatoes grow in well drained soil with sufficient sunlight. Water plants near their roots and check soil moisture regularly."
+  },
+  "queries": [
+    {"id": "rag_definition", "query": "What is retrieval augmented generation?", "expected": ["rag.txt"]},
+    {"id": "rag_context", "query": "Why does RAG retrieve document passages?", "expected": ["rag.txt"]},
+    {"id": "embedding_definition", "query": "What do embeddings represent?", "expected": ["vectors.txt"]},
+    {"id": "cosine_distance", "query": "Explain cosine distance", "expected": ["vectors.txt"]},
+    {"id": "tls_encryption", "query": "How does TLS encrypt network traffic?", "expected": ["tls.txt"]},
+    {"id": "tls_failure", "query": "What causes a TLS handshake failure?", "expected": ["tls.txt"]},
+    {"id": "certificate_identity", "query": "How does certificate validation check server identity?", "expected": ["tls.txt"]},
+    {"id": "backup", "query": "When should database backups be created?", "expected": ["backups.txt"]},
+    {"id": "recovery", "query": "What happens to unfinished imports after interruption?", "expected": ["backups.txt"]},
+    {"id": "chunk_overlap", "query": "Why does chunk overlap preserve context?", "expected": ["chunks.txt"]},
+    {"id": "page_metadata", "query": "Where are PDF page numbers retained?", "expected": ["chunks.txt"]},
+    {"id": "replacement", "query": "What happens when document replacement fails?", "expected": ["versions.txt"]},
+    {"id": "gardening", "query": "What soil helps tomatoes grow?", "expected": ["garden.txt"]},
+    {"id": "exact_version", "query": "podman pull 1.0.4-3", "expected": ["commands.txt"]},
+    {"id": "missing_version", "query": "podman pull 9.9.9-99", "expected": []},
+    {"id": "missing_quote", "query": "Find \"quantum gravity reactor\"", "expected": []},
+    {"id": "unrelated_medical", "query": "Explain aspirin dosage", "expected": []},
+    {"id": "unrelated_travel", "query": "List restaurants near Kyoto", "expected": []},
+    {"id": "unrelated_space", "query": "Describe Martian volcano geology", "expected": []},
+    {"id": "unrelated_music", "query": "Who composed this violin sonata?", "expected": []}
+  ]
+}

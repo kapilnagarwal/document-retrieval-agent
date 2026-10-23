@@ -1,0 +1,1 @@
+A vector database stores embeddings alongside source text and metadata. Embeddings are numeric vectors that represent learned semantic features. Cosine distance is one way to rank nearby vectors; lower cosine distance means closer directions. ChromaDB can persist a local collection on disk.

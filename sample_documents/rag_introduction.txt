@@ -1,0 +1,1 @@
+Retrieval-augmented generation (RAG) first retrieves relevant passages, then supplies those passages to a language model as context. Chunking divides long documents into searchable passages. Overlap helps preserve context at passage boundaries. Citations let a reader inspect the evidence but do not prove that an answer is correct.
