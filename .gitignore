@@ -19,3 +19,9 @@ htmlcov/
 *.pem
 *.key
 document_inventory.json
+.aws/
+.ssh/
+*.p12
+*.pfx
+*.jks
+/docs/python-for-java/

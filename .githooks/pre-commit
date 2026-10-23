@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+if [ -x .venv/bin/python ]; then
+    exec .venv/bin/python -m scripts.check_publication --staged --compare-local-secrets
+fi
+exec python3 -m scripts.check_publication --staged

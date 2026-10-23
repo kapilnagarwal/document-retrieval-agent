@@ -13,7 +13,7 @@ The backend uses FastAPI, local CPU MiniLM embeddings, Chroma persistence, and a
 - Separate learning and private-local profiles. Private-local generation is disabled.
 - A RAG debugger showing context, prompts, distances, timings, and token usage.
 - Deterministic regression tests and a separate real-embedding retrieval benchmark.
-- A file-by-file Python walkthrough for Java developers under [docs/python-for-java](docs/python-for-java/README.md).
+- Public architecture and learning documentation in [ARCHITECTURE.md](ARCHITECTURE.md) and [LEARNING_GUIDE.md](LEARNING_GUIDE.md).
 
 ## Install
 
@@ -83,6 +83,18 @@ python -m scripts.evaluate_retrieval
 ```
 
 Ordinary tests use temporary data and fake AI implementations, require no API key/model download, and skip the live Gemini test unless explicitly enabled. The separate evaluation uses real local MiniLM embeddings and an isolated synthetic corpus; it never calls Gemini. See [evaluation/README.md](evaluation/README.md) for metrics, thresholds, and limitations. GitHub Actions runs lint/format checks and tests on Python 3.11/3.13; manual workflow dispatch additionally runs real retrieval evaluation.
+
+## Publication privacy
+
+Enable the versioned pre-commit check once per clone:
+
+```bash
+git config core.hooksPath .githooks
+python -m scripts.check_publication --staged --compare-local-secrets
+python -m scripts.check_publication
+```
+
+The local check scans the Git index and can compare it to configured secret values without printing them. CI scans reachable file history and commit email metadata. It rejects common token/key formats, private artifacts, personal home paths, non-placeholder emails, and credentials in non-example URLs. These are preventive pattern checks, not a guarantee that every possible secret or personal detail will be recognized. Use GitHub noreply addresses for commit authorship and keep private source collections outside Git.
 
 ## Architecture and limits
 

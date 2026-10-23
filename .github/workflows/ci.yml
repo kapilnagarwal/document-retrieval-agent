@@ -20,6 +20,8 @@ jobs:
       RUN_GEMINI_INTEGRATION: "0"
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -28,6 +30,7 @@ jobs:
             requirements.txt
             requirements-dev.txt
       - run: python -m pip install -r requirements-dev.txt
+      - run: python -m scripts.check_publication
       - run: ruff check .
       - run: ruff format --check .
       - run: python -m pytest -q
