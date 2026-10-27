@@ -1,5 +1,6 @@
 import hashlib
 import time
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from threading import RLock
@@ -32,6 +33,22 @@ class IngestionService:
             for path in self.directory.glob("*.bin"):
                 if path.stem not in retained:
                     path.unlink(missing_ok=True)
+            counts = Counter(
+                m["document_id"] for m in store.collection.get(include=["metadatas"])["metadatas"]
+            )
+            self.recovery_issues = []
+            for record in records:
+                if record["status"] != "ready":
+                    continue
+                identifier = record["document_id"]
+                if not (self.directory / f"{identifier}.bin").is_file():
+                    self.recovery_issues.append(
+                        {"document_id": identifier, "issue": "missing_original"}
+                    )
+                if counts[identifier] != record["chunk_count"]:
+                    self.recovery_issues.append(
+                        {"document_id": identifier, "issue": "chunk_count_mismatch"}
+                    )
 
     def _remove(self, document_id):
         self.store.delete(document_id)
@@ -73,7 +90,12 @@ class IngestionService:
             )
             try:
                 self.manifest.save(record)
-                path.write_bytes(content)
+                with path.open("wb") as file:
+                    import os
+
+                    file.write(content)
+                    file.flush()
+                    os.fsync(file.fileno())
                 sections = extract(path, Path(filename).suffix.lower())
                 chunks = self.chunker.split(sections, document_id, filename)
                 if not chunks:

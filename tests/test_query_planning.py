@@ -40,6 +40,26 @@ def test_explicit_modes_override_auto_intent():
     assert plan_query("cncc", "links")["intent"] == "links"
 
 
+@pytest.mark.parametrize(
+    "query",
+    [
+        "check what is the handshake status code in failure scenarios",
+        "Please check what happens when the handshake fails",
+        "tell me how handshake errors are handled",
+        "show me which status codes indicate failure",
+        "find out why the handshake failed",
+        "what happens when the handshake fails",
+    ],
+)
+def test_prefaced_questions_allow_semantic_search(query):
+    assert plan_query(query)["natural_question"]
+
+
+@pytest.mark.parametrize("query", ["check handshake", "podman build", "find helm 1.2.3"])
+def test_keyword_lookups_remain_strict(query):
+    assert not plan_query(query)["natural_question"]
+
+
 def test_scope_is_intersection_and_empty_never_means_all():
     records = [
         {"document_id": "note", "filename": "note.txt"},

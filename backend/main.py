@@ -1,5 +1,5 @@
 import logging
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, nullcontext
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -9,6 +9,7 @@ from backend.config import Settings
 from backend.rag.generator import GenerationError
 from backend.rag.query_plan import ENGINE_VERSION
 from backend.services import Services
+from backend.state import ProcessLease
 
 
 def create_app(settings=None, services=None):
@@ -22,8 +23,20 @@ def create_app(settings=None, services=None):
 
     @asynccontextmanager
     async def lifespan(app):
-        app.state.services = services or Services(settings)
-        yield
+        lease = (
+            ProcessLease(settings.upload_directory / ".owner.lock")
+            if services is None
+            else nullcontext()
+        )
+        with lease:
+            app.state.services = services or Services(settings)
+            app.state.services.jobs.start()
+            try:
+                yield
+            finally:
+                app.state.services.jobs.close()
+                for thread in app.state.services.stream_threads:
+                    thread.join()
 
     app = FastAPI(title="Document Retrieval AI Agent", lifespan=lifespan)
     for router in (documents.router, search.router, chat.router):
@@ -48,7 +61,8 @@ def create_app(settings=None, services=None):
         services = request.app.state.services
         with services.ingestion.lock:
             return dict(
-                status="ok",
+                status="degraded" if services.ingestion.recovery_issues else "ok",
+                recovery_issues=services.ingestion.recovery_issues,
                 retrieval_engine_version=ENGINE_VERSION,
                 vector_database="ready",
                 chunks=services.store.count(),

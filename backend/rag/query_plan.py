@@ -5,7 +5,12 @@ import re
 from backend.rag.document_finder import document_phrase, wants_document
 from backend.rag.lexical import query_tokens, required_literals
 
-ENGINE_VERSION = "planned-evidence-v1"
+ENGINE_VERSION = "planned-evidence-v2"
+NATURAL_QUESTION = re.compile(
+    r"^\s*(?:please\s+)?(?:(?:check|tell\s+me|show\s+me|find\s+out)\s+)?"
+    r"(?:how|why|what|when|where|which|who|explain)\b",
+    re.I,
+)
 PROVIDERS = {"confluence": r"\bconfluence\b", "jira": r"\bjira\b", "gitlab": r"\bgitlab\b"}
 REFERENCE = re.compile(
     r"\b(?:links?|urls?|references?|webpages?)\b|\b(?:confluence|jira|gitlab)\s+pages?\b", re.I
@@ -83,7 +88,7 @@ def plan_query(query, mode="auto"):
         filename=filename,
         required_terms=required_literals(query),
         all_requested=bool(re.search(r"\ball\b", query, re.I)),
-        natural_question=bool(re.match(r"\s*(?:how|why|what|when|where|explain)\b", query, re.I)),
+        natural_question=bool(NATURAL_QUESTION.match(query)),
         scope="imported_sources_only",
         engine_version=ENGINE_VERSION,
     )

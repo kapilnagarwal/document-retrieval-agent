@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=ROOT / ".env", extra="ignore")
     gemini_api_key: SecretStr = SecretStr("")
     data_profile: str = "custom"
+    generation_timeout_seconds: float = 100
     gemini_model: str = "gemini-2.5-flash-lite"
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     chroma_persist_directory: Path = ROOT / "data/chroma_db"
@@ -39,6 +40,8 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def valid_limits(self):
+        if not 1 <= self.generation_timeout_seconds <= 300:
+            raise ValueError("GENERATION_TIMEOUT_SECONDS must be between 1 and 300")
         if not 0 < self.chat_min_keyword_coverage <= 1:
             raise ValueError("CHAT_MIN_KEYWORD_COVERAGE must be greater than 0 and at most 1")
         if not 0 <= self.chunk_overlap < self.chunk_size:

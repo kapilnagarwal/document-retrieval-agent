@@ -18,11 +18,21 @@ class SearchRequest(BaseModel):
         return value.strip()
 
 
+class ChatTurn(BaseModel):
+    question: str = Field(min_length=1, max_length=8000)
+    answer: str = Field(min_length=1, max_length=32000)
+
+
 class ChatRequest(BaseModel):
+    answer_mode: Literal["auto", "documents", "general", "web"] = "documents"
+    scope: Literal["all", "notes", "pdf"] = "all"
     question: str = Field(min_length=1, max_length=8000)
     top_k: int | None = Field(default=None, ge=1, le=30)
     document_ids: list[str] = Field(default_factory=list, max_length=200)
+    conversation_id: str | None = Field(default=None, max_length=100)
+    request_id: str | None = Field(default=None, max_length=100)
     debug: bool = False
+    history: list[ChatTurn] = Field(default_factory=list, max_length=4)
 
     @field_validator("question")
     @classmethod
@@ -61,6 +71,7 @@ class IngestionResult(BaseModel):
 
 
 class ChunkHit(BaseModel):
+    context_chunk_ids: list[str] = Field(default_factory=list)
     chunk_id: str
     document_id: str
     filename: str
@@ -92,6 +103,7 @@ class SearchResponse(BaseModel):
 
 
 class Source(BaseModel):
+    context_chunk_ids: list[str] = Field(default_factory=list)
     source_id: str
     chunk_id: str
     filename: str
@@ -103,7 +115,17 @@ class Source(BaseModel):
     sha256: str | None = None
 
 
+class WebSource(BaseModel):
+    title: str
+    url: str
+
+
 class ChatResponse(BaseModel):
+    answer_origin: Literal["documents", "conversation", "general", "web"] = "documents"
+    web_sources: list[WebSource] = Field(default_factory=list)
+    search_suggestions_html: str | None = None
+    conversation_id: str | None = None
+    request_id: str | None = None
     question: str
     answer: str
     answer_status: Literal["answered", "insufficient_evidence", "unverified"] = "answered"

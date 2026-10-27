@@ -1,4 +1,5 @@
 from backend.ingestion.embedder import Embedder
+from backend.ingestion.jobs import IndexJobs
 from backend.ingestion.service import IngestionService
 from backend.rag.command_finder import CommandFinder
 from backend.rag.document_finder import DocumentFinder
@@ -8,10 +9,12 @@ from backend.rag.pipeline import RAGPipeline
 from backend.rag.retriever import Retriever
 from backend.rag.source_catalog import SourceCatalog
 from backend.rag.vector_store import VectorStore
+from backend.state import ChatStore
 
 
 class Services:
     def __init__(self, settings, embedder=None, generator=None):
+        self.stream_threads = []
         self.settings = settings
         self.store = VectorStore(
             settings.chroma_persist_directory,
@@ -21,6 +24,8 @@ class Services:
         )
         self.embedder = embedder or Embedder(settings.embedding_model)
         self.ingestion = IngestionService(settings, self.store, self.embedder)
+        self.chats = ChatStore(self.ingestion.directory / "conversations.sqlite3")
+        self.jobs = IndexJobs(self.ingestion)
         self.document_finder = DocumentFinder(self.ingestion)
         self.source_catalog = SourceCatalog(self.ingestion)
         self.link_finder = LinkFinder(self.source_catalog)

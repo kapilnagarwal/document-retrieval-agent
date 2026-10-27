@@ -7,7 +7,7 @@ from collections import Counter, defaultdict
 STOP_WORDS = set(
     "a an the is are was were does do did it contain contains find show me give get all any my notes note document documents what which where how can could would should please cmds cmd commands command with for of in on and or to from about tags version versions".split()
 )
-STOP_WORDS.update({"i", "its", "using", "use"})
+STOP_WORDS.update({"i", "its", "using", "use", "be", "been", "being"})
 VERSION = re.compile(r"(?<![\w.])v?\d+(?:\.\d+)+(?:[-+][A-Za-z0-9]+(?:[.-]\d+)*)?(?![\w])", re.I)
 
 

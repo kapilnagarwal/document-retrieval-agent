@@ -18,26 +18,39 @@ def profile_environment(profile):
         "DATA_PROFILE": profile,
         "CHROMA_PERSIST_DIRECTORY": str(ROOT / "data" / profile / "chroma_db"),
         "UPLOAD_DIRECTORY": str(ROOT / "data" / profile / "uploads"),
-        "ALLOW_GEMINI_DOCUMENT_CONTEXT": "true" if profile == "learning" else "false",
+        "ALLOW_GEMINI_DOCUMENT_CONTEXT": (
+            "true"
+            if profile == "learning"
+            else os.getenv("LOCAL_ALLOW_GEMINI_DOCUMENT_CONTEXT", "false")
+        ),
         "BACKEND_PORT": port,
         "BACKEND_URL": "http://127.0.0.1:" + port,
         "HF_HOME": str(ROOT / "data/model_cache"),
         "HF_HUB_DISABLE_XET": "1",
-        "NO_PROXY": "127.0.0.1,localhost",
+        "NO_PROXY": ",".join(
+            dict.fromkeys(
+                ["127.0.0.1", "localhost"]
+                + [host.strip() for host in os.getenv("NO_PROXY", "").split(",") if host.strip()]
+            )
+        ),
     }
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("profile", choices=["learning", "local"])
-    parser.add_argument("action", choices=["backend", "frontend", "index", "index-notes"])
+    parser.add_argument("action", choices=["app", "backend", "frontend", "index", "index-notes"])
     parser.add_argument("--folder", type=Path, help="Source folder for an index action")
     parser.add_argument("--replace-existing", action="store_true")
     args = parser.parse_args()
     load_dotenv(ROOT / ".env")
     os.environ.update(profile_environment(args.profile))
+    if args.action in {"index", "index-notes"}:
+        os.environ["ALLOW_GEMINI_DOCUMENT_CONTEXT"] = "false"
     os.chdir(ROOT)
-    if args.action == "backend":
+    if args.action == "app":
+        command = [sys.executable, "-m", "scripts.run_app", args.profile]
+    elif args.action == "backend":
         command = [sys.executable, "-m", "backend.main"]
     elif args.action == "frontend":
         command = [

@@ -9,6 +9,7 @@ from backend.rag.lexical import (
     query_tokens,
     required_literals,
 )
+from backend.rag.query_focus import code_evidence_score, field_evidence_score
 
 
 class Retriever:
@@ -17,7 +18,16 @@ class Retriever:
         self._keyword_index = None
         self._indexed_revision = None
 
-    def search(self, query, top_k=5, document_ids=None, allow_semantic=True, keyword_query=None):
+    def search(
+        self,
+        query,
+        top_k=5,
+        document_ids=None,
+        allow_semantic=True,
+        keyword_query=None,
+        field_entities=None,
+        answer_focus=None,
+    ):
         start = time.perf_counter()
         if self._keyword_index is None or self._indexed_revision != self.store.revision:
             self._keyword_index = KeywordIndex(self.store.retrieval_records())
@@ -30,6 +40,10 @@ class Retriever:
             for i, record in enumerate(records)
             if (not allowed or record["document_id"] in allowed)
             and all(contains_literal(record["text"], term) for term in literals)
+            and (
+                not field_entities
+                or any(contains_literal(record["text"], entity) for entity in field_entities)
+            )
         }
 
         def response(chunks, dimension, message=None):
@@ -60,7 +74,12 @@ class Retriever:
         }
         # Literal evidence must not be outranked by a semantically similar but different command.
         # Do not pad an exact match with unrelated nearest neighbours just to fill top-k.
-        if phrase_matches:
+        if answer_focus:
+            eligible = {
+                i for i in eligible if code_evidence_score(records[i]["text"], answer_focus)
+            }
+            match_type = "semantic"
+        elif phrase_matches:
             eligible, match_type = phrase_matches, "exact_phrase"
         else:
             all_terms = {
@@ -96,7 +115,22 @@ class Retriever:
         fusion = {i: 1 / (60 + rank) for rank, i in enumerate(dense_ranking, 1)}
         for rank, i in enumerate(sparse_ranking, 1):
             fusion[i] = fusion.get(i, 0) + 1 / (60 + rank)
-        ranking = sorted(eligible, key=lambda i: (-fusion[i], distances[i], records[i]["chunk_id"]))
+        field_scores = (
+            {i: field_evidence_score(records[i]["text"], field_entities) for i in eligible}
+            if field_entities
+            else {}
+        )
+        if any(field_scores.values()):
+            eligible = {i for i in eligible if field_scores[i] > 0}
+        ranking = sorted(
+            eligible,
+            key=lambda i: (
+                -field_scores.get(i, 0),
+                -fusion[i],
+                distances[i],
+                records[i]["chunk_id"],
+            ),
+        )
         hits, seen = [], set()
         for i in ranking:
             record = records[i]

@@ -22,6 +22,9 @@ class TinyModel:
 
 
 class FakeGenerator:
+    def rewrite_question(self, question, history):
+        return question, {"total_tokens": 2}
+
     def generate(self, prompt):
         return "A grounded example [S1]", {"total_tokens": 12}
 

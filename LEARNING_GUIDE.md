@@ -132,11 +132,11 @@ Implementation: `backend/main.py`. Read `create_app; backend/api route functions
 
 ## 17. Streamlit
 
-Streamlit renders a Python UI with session state. It talks to the API over HTTP and holds chat history only for display. It does not access the vector database directly.
+Streamlit renders a Python UI with session state. It talks to the API over HTTP and holds chat history for display and follow-up context. It sends at most four recent question/answer turns, truncated to 4,000 characters per field. The backend resolves references into a standalone retrieval question, retrieves fresh evidence, and grounds the next answer in that evidence. Streamlit does not access the vector database directly.
 
 Implementation: `frontend/app.py`. Read `api, show_sources` to follow how it works.
 
-**Exercise:** Change top-k in the sidebar, compare local search and full RAG, and clear chat history. Verify a follow-up question lacks prior-turn context.
+**Exercise:** Ask about handshake error codes, then ask which of those are server errors. Compare the resolved retrieval query in debug output with the follow-up text. Start a new conversation and verify the earlier turns are no longer sent. Change the document filter and confirm conversation context resets.
 
 ## 18. RAG evaluation
 

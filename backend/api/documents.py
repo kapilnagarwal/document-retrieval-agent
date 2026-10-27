@@ -94,3 +94,30 @@ def source_audit(request: Request):
 
     with services.ingestion.lock:
         return audit_notes(services.ingestion)
+
+
+@router.post("/index-jobs", status_code=202)
+def submit_index_job(request: Request, file: UploadFile = File(...)):
+    services = request.app.state.services
+    try:
+        content = file.file.read(services.settings.max_upload_size_mb * 1024 * 1024 + 1)
+        return services.jobs.submit(file.filename or "", content)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from None
+    finally:
+        file.file.close()
+
+
+@router.get("/index-jobs")
+def list_index_jobs(request: Request):
+    return request.app.state.services.jobs.list()
+
+
+@router.post("/index-jobs/{identifier}/retry")
+def retry_index_job(identifier: str, request: Request):
+    try:
+        return request.app.state.services.jobs.retry(identifier)
+    except KeyError:
+        raise HTTPException(404, "Index job not found") from None
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from None

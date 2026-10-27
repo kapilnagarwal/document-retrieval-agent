@@ -7,6 +7,7 @@ from pathlib import Path
 from backend.config import Settings
 from backend.ingestion.loader import SUPPORTED
 from backend.services import Services
+from backend.state import ProcessLease
 
 
 def main():
@@ -53,4 +54,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    with ProcessLease(Settings().upload_directory / ".owner.lock"):
+        main()
